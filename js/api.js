@@ -1,5 +1,5 @@
 // Cliente da API (Apps Script). O token da sessão fica guardado no celular (IndexedDB, em fila.js).
-const API_URL = 'https://script.google.com/macros/s/AKfycbxCp9NLyPvNQ8RYe3EF64vvKcWDzzSUdCIiLDGIwPI8Gg3qeHaPvSJodm_ucI_j9-Rt3w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxeun4ig9PNUqlvpH64KMV4xYcMNf9PkNXPfV_QHyVOVsYw1JBuPHwskq8Mi5nKhv965Q/exec';
 
 async function api(rota, { metodo = 'GET', corpo, query = '' } = {}) {
   const t = (await lerConfig('token')) || '';
