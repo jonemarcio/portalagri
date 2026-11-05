@@ -1,6 +1,6 @@
 // Service worker: a tela de leitura abre sem internet, e a fila é enviada quando a conexão volta.
 // Todos os caminhos são relativos ao local do sw.js, para funcionar em subpasta (GitHub Pages).
-const CACHE = 'atto-amostras-v3';
+const CACHE = 'atto-amostras-v4';
 const BASE = new URL('.', self.location.href).href;
 const ARQUIVOS = [
   './', 'index.html', 'leitura/index.html',
