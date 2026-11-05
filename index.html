@@ -72,7 +72,10 @@
       if (d.usuario.troca_senha_pendente) return prepararTroca('primeiro');
       aviso(`Olá, ${d.usuario.nome}. Leia o QR de uma etiqueta para começar.`);
     } catch (e) {
-      aviso(e.codigo === 'credenciais_invalidas' ? 'E-mail ou senha inválidos.' : 'Não foi possível entrar. Verifique a internet.');
+      // Código do erro aparece junto, para facilitar o diagnóstico
+      aviso(e.codigo === 'credenciais_invalidas'
+        ? 'E-mail ou senha inválidos.'
+        : `Não foi possível entrar (${e.codigo || 'sem conexão com a API'}).`);
     }
   };
 
