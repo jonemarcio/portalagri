@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1b5e20">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/app.css">
+<title>Entrar - ATTO Amostras</title>
+</head>
+<body>
+<header><h1>ATTO Amostras</h1></header>
+<main>
+  <form id="login" class="card">
+    <h2>Entrar</h2>
+    <label>E-mail corporativo <input name="email" type="email" autocomplete="username" required></label>
+    <label>Senha (no 1º acesso, use o número do crachá)
+      <input name="senha" type="password" autocomplete="current-password" required></label>
+    <button class="btn" type="submit">Entrar</button>
+    <button class="btn secundario" type="button" id="esqueci">Esqueci minha senha</button>
+  </form>
+
+  <form id="trocar" class="card" hidden>
+    <h2>Crie sua senha</h2>
+    <p>Mínimo de 6 caracteres.</p>
+    <label id="campo-atual">Senha atual (crachá no 1º acesso) <input name="atual" type="password" autocomplete="current-password"></label>
+    <label>Nova senha <input name="nova" type="password" minlength="6" required autocomplete="new-password"></label>
+    <button class="btn" type="submit">Salvar</button>
+  </form>
+
+  <form id="recuperar" class="card" hidden>
+    <h2>Recuperar senha</h2>
+    <p>O link vai para o seu e-mail corporativo.</p>
+    <label>E-mail corporativo <input name="email" type="email" required></label>
+    <button class="btn" type="submit">Enviar link</button>
+  </form>
+
+  <div id="msg" class="status"></div>
+</main>
+<script src="js/fila.js"></script>
+<script src="js/api.js"></script>
+<script>
+  const $ = (s) => document.querySelector(s);
+  const mostrar = (id) => ['login', 'trocar', 'recuperar'].forEach(x => $('#' + x).hidden = x !== id);
+  const aviso = (t) => $('#msg').textContent = t;
+
+  const tokenRedefinir = new URLSearchParams(location.search).get('redefinir');
+  let modoTroca = 'primeiro';
+
+  function prepararTroca(modo) {
+    modoTroca = modo;
+    $('#campo-atual').hidden = modo === 'redefinir';
+    $('#trocar input[name=atual]').required = modo !== 'redefinir';
+    mostrar('trocar');
+  }
+
+  (async () => {
+    if (tokenRedefinir) return prepararTroca('redefinir');
+    try {
+      const u = await api('me');
+      if (u.troca_senha_pendente) return prepararTroca('primeiro');
+      aviso(`Olá, ${u.nome}. Leia o QR de uma etiqueta para começar.`);
+    } catch (_) { /* sem sessão: continua no login */ }
+  })();
+
+  $('#login').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    try {
+      const d = await api('login', { metodo: 'POST', corpo: { email: f.get('email'), senha: f.get('senha') } });
+      await gravarConfig('token', d.token);
+      if (d.usuario.troca_senha_pendente) return prepararTroca('primeiro');
+      aviso(`Olá, ${d.usuario.nome}. Leia o QR de uma etiqueta para começar.`);
+    } catch (e) {
+      aviso(e.codigo === 'credenciais_invalidas' ? 'E-mail ou senha inválidos.' : 'Não foi possível entrar. Verifique a internet.');
+    }
+  };
+
+  $('#trocar').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    const nova = f.get('nova');
+    try {
+      if (modoTroca === 'redefinir') {
+        await api('senha/redefinir', { metodo: 'POST', corpo: { token: tokenRedefinir, senha_nova: nova } });
+        history.replaceState(null, '', location.pathname);
+        aviso('Senha criada. Entre com a nova senha.');
+        mostrar('login');
+      } else {
+        await api('trocar_senha', { metodo: 'POST', corpo: { senha_atual: f.get('atual'), senha_nova: nova } });
+        aviso('Senha criada. Leia o QR de uma etiqueta para começar.');
+        mostrar('login');
+      }
+    } catch (e) {
+      aviso(
+        e.codigo === 'senha_atual_incorreta' ? 'Senha atual incorreta.' :
+        e.codigo === 'token_invalido' ? 'Link inválido ou vencido. Peça um novo.' :
+        e.codigo === 'senha_curta' ? 'A nova senha precisa de pelo menos 6 caracteres.' :
+        'Não foi possível salvar a senha. Verifique a internet.'
+      );
+    }
+  };
+
+  $('#esqueci').onclick = () => mostrar('recuperar');
+
+  $('#recuperar').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const email = new FormData(ev.target).get('email');
+    await api('senha/solicitar', { metodo: 'POST', corpo: { email } }).catch(() => {});
+    aviso('Se o e-mail estiver cadastrado, o link foi enviado para o e-mail corporativo.');
+    mostrar('login');
+  };
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>

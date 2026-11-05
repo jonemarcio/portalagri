@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1b5e20">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="stylesheet" href="../css/app.css">
+<title>Amostra - ATTO</title>
+</head>
+<body>
+<header>
+  <h1>Amostra</h1>
+  <span id="quem"></span>
+</header>
+<main>
+  <div class="id" id="etiqueta">---</div>
+  <div id="situacao" class="card" hidden></div>
+  <form id="form" class="card" hidden></form>
+  <div id="resumo" class="card" hidden></div>
+  <div id="status" class="status"></div>
+  <div id="fila" class="status" hidden></div>
+</main>
+<script src="../js/fila.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/leitura.js"></script>
+<script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
+</script>
+</body>
+</html>
